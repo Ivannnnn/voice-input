@@ -10,69 +10,23 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 class RecognizerActivity : Activity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val padding = (24 * resources.displayMetrics.density).toInt()
-
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(padding, padding, padding, padding)
-        }
-
-        val title = TextView(this).apply {
-            text = "Cloud Voice Input"
-            textSize = 22f
-            gravity = Gravity.CENTER
-        }
-
-        val info = TextView(this).apply {
-            text = "V0: no microphone yet.\nPress the button and I will return test text to HeliBoard."
-            textSize = 16f
-            gravity = Gravity.CENTER
-            setPadding(0, padding, 0, padding)
-        }
-
-        val returnButton = Button(this).apply {
+        val p = (24 * resources.displayMetrics.density).toInt()
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(p,p,p,p) }
+        box.addView(TextView(this).apply { text = "Cloud Voice Input"; textSize = 22f; gravity = Gravity.CENTER })
+        box.addView(TextView(this).apply { text = "Generic speech-intent test."; textSize = 16f; gravity = Gravity.CENTER; setPadding(0,p,0,p) })
+        box.addView(Button(this).apply {
             text = "Return test transcription"
             setOnClickListener {
-                returnRecognitionResult(
-                    "Hello from Cloud Voice Input. The HeliBoard integration works."
-                )
+                val result = Intent().apply {
+                    putStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS, arrayListOf("Hello from Cloud Voice Input. The speech intent works."))
+                    putExtra(RecognizerIntent.EXTRA_CONFIDENCE_SCORES, floatArrayOf(1.0f))
+                }
+                setResult(RESULT_OK, result); finish()
             }
-        }
-
-        val cancelButton = Button(this).apply {
-            text = "Cancel"
-            setOnClickListener {
-                setResult(RESULT_CANCELED)
-                finish()
-            }
-        }
-
-        container.addView(title)
-        container.addView(info)
-        container.addView(returnButton)
-        container.addView(cancelButton)
-
-        setContentView(container)
-    }
-
-    private fun returnRecognitionResult(text: String) {
-        val resultIntent = Intent().apply {
-            putStringArrayListExtra(
-                RecognizerIntent.EXTRA_RESULTS,
-                arrayListOf(text)
-            )
-            putExtra(
-                RecognizerIntent.EXTRA_CONFIDENCE_SCORES,
-                floatArrayOf(1.0f)
-            )
-        }
-
-        setResult(RESULT_OK, resultIntent)
-        finish()
+        })
+        box.addView(Button(this).apply { text = "Cancel"; setOnClickListener { setResult(RESULT_CANCELED); finish() } })
+        setContentView(box)
     }
 }

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.CloudVoiceInput" parent="Theme.AppCompat.DayNight.NoActionBar" />
-
     <style name="Theme.CloudVoiceInput.Dialog" parent="Theme.AppCompat.DayNight.Dialog">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowMinWidthMajor">85%</item>

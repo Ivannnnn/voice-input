@@ -1,77 +1,104 @@
 package com.example.cloudvoiceinput
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.speech.RecognizerIntent
+import android.provider.Settings
+import android.text.InputType
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
 
+    private val microphonePermissionRequest = 1001
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val padding = (24 * resources.displayMetrics.density).toInt()
+        val p = (24 * resources.displayMetrics.density).toInt()
+        val prefs = getSharedPreferences("voice_input_settings", MODE_PRIVATE)
 
-        val container = LinearLayout(this).apply {
+        val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(padding, padding, padding, padding)
+            setPadding(p, p, p, p)
         }
 
-        val title = TextView(this).apply {
+        box.addView(TextView(this).apply {
             text = "Cloud Voice Input"
             textSize = 26f
-        }
+        })
 
-        val description = TextView(this).apply {
-            text = """
-                V0 integration test.
-
-                The app currently returns a fixed sentence instead of transcribing audio.
-
-                Test 1: press the button below.
-                Test 2: make this app Android's default speech-input handler, then tap HeliBoard's microphone.
-            """.trimIndent()
+        box.addView(TextView(this).apply {
+            text =
+                "Uses ElevenLabs Scribe v2 batch transcription.\n\n" +
+                "Enter your ElevenLabs API key below. It is stored only on this phone."
             textSize = 16f
-            setPadding(0, padding, 0, padding)
+            setPadding(0, p, 0, p / 2)
+        })
+
+        val apiKeyInput = EditText(this).apply {
+            hint = "ElevenLabs API key"
+            setText(prefs.getString("elevenlabs_api_key", ""))
+            inputType =
+                InputType.TYPE_CLASS_TEXT or
+                InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
 
-        val testButton = Button(this).apply {
-            text = "Test recognition activity"
+        box.addView(apiKeyInput)
+
+        box.addView(Button(this).apply {
+            text = "Save API key"
+
             setOnClickListener {
-                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                    setPackage(packageName)
-                    putExtra(
-                        RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-                    )
-                }
-                startActivityForResult(intent, 100)
+                val key = apiKeyInput.text.toString().trim()
+
+                prefs.edit()
+                    .putString("elevenlabs_api_key", key)
+                    .apply()
+
+                Toast.makeText(
+                    this@MainActivity,
+                    "API key saved",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
-        }
+        })
 
-        container.addView(title)
-        container.addView(description)
-        container.addView(testButton)
+        box.addView(Button(this).apply {
+            text = "Grant microphone permission"
 
-        setContentView(container)
+            setOnClickListener {
+                requestMicrophonePermission()
+            }
+        })
+
+        box.addView(Button(this).apply {
+            text = "Open input method settings"
+
+            setOnClickListener {
+                startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
+            }
+        })
+
+        setContentView(box)
+
+        requestMicrophonePermission()
     }
 
-    @Deprecated("Kept simple for the V0 test")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == 100 && resultCode == RESULT_OK) {
-            val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-            val text = results?.firstOrNull() ?: "(no text returned)"
-
-            android.app.AlertDialog.Builder(this)
-                .setTitle("Recognition result")
-                .setMessage(text)
-                .setPositiveButton("OK", null)
-                .show()
+    private fun requestMicrophonePermission() {
+        if (
+            checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(
+                arrayOf(Manifest.permission.RECORD_AUDIO),
+                microphonePermissionRequest
+            )
         }
     }
 }
